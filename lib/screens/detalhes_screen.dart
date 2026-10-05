@@ -1,6 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 import '../models/filme.dart';
 import '../services/firestore_service.dart';
+import '../theme/app_theme.dart';
+import '../widgets/app_brand.dart';
+import '../widgets/app_snack.dart';
+import '../widgets/conteudo_limitado.dart';
+import '../widgets/nota_selo.dart';
+import '../widgets/poster_filme.dart';
 
 class DetalhesScreen extends StatefulWidget {
   final Filme filme;
@@ -22,16 +28,22 @@ class _DetalhesScreenState extends State<DetalhesScreen> {
     try {
       await _firestore.salvarComoQueroVer(widget.filme);
       if (mounted) {
-        ScaffoldMessenger.of(
+        AppSnack.mostrar(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Salvo como Quero Ver')));
+          'Salvo como Quero Ver',
+          icone: Icons.bookmark_added_rounded,
+          cor: AppColors.destaque,
+        );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        AppSnack.mostrar(
           context,
-        ).showSnackBar(SnackBar(content: Text('Erro ao salvar: $e')));
+          'Erro ao salvar: $e',
+          icone: Icons.error_outline_rounded,
+          cor: AppColors.perigo,
+        );
       }
     } finally {
       if (mounted) {
@@ -49,16 +61,22 @@ class _DetalhesScreenState extends State<DetalhesScreen> {
     try {
       await _firestore.marcarComoJaVi(widget.filme);
       if (mounted) {
-        ScaffoldMessenger.of(
+        AppSnack.mostrar(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Marcado como Já Vi')));
+          'Marcado como Já Vi',
+          icone: Icons.check_circle_rounded,
+          cor: AppColors.sucesso,
+        );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        AppSnack.mostrar(
           context,
-        ).showSnackBar(SnackBar(content: Text('Erro ao salvar: $e')));
+          'Erro ao salvar: $e',
+          icone: Icons.error_outline_rounded,
+          cor: AppColors.perigo,
+        );
       }
     } finally {
       if (mounted) {
@@ -72,54 +90,126 @@ class _DetalhesScreenState extends State<DetalhesScreen> {
   @override
   Widget build(BuildContext context) {
     final filme = widget.filme;
+
     return Scaffold(
-      appBar: AppBar(title: Text(filme.title)),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (filme.posterUrl != null)
-              Center(
-                child: Image.network(
-                  filme.posterUrl!,
-                  height: 300,
-                  fit: BoxFit.cover,
+      appBar: const AppBrandBar(subtitulo: 'DETALHES'),
+      body: ConteudoLimitado(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final ladoAlado = constraints.maxWidth >= 720;
+
+              final poster = Container(
+                width: 240,
+                height: 360,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x80000000),
+                      blurRadius: 24,
+                      offset: Offset(0, 12),
+                    ),
+                  ],
                 ),
-              ),
-            const SizedBox(height: 16),
-            Text(filme.title, style: Theme.of(context).textTheme.headlineSmall),
-            if (filme.voteAverage != null)
-              Text('Nota: ${filme.voteAverage!.toStringAsFixed(1)}'),
-            const SizedBox(height: 16),
-            const Text(
-              'Sinopse',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(filme.overview),
-            const SizedBox(height: 24),
-            if (_salvando)
-              const Center(child: CircularProgressIndicator())
-            else
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                child: PosterFilme(url: filme.posterUrl),
+              );
+
+              final informacoes = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: _salvarQueroVer,
-                    icon: const Icon(Icons.bookmark_add),
-                    label: const Text('Quero Ver'),
+                  Text(
+                    filme.title,
+                    style: Theme.of(context).textTheme.headlineLarge,
                   ),
-                  ElevatedButton.icon(
-                    onPressed: _marcarJaVi,
-                    icon: const Icon(Icons.check_circle),
-                    label: const Text('Já Vi'),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      NotaSelo(nota: filme.voteAverage),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Nota ${filme.voteAverage?.toStringAsFixed(1) ?? '-'} / 10',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        'TMDB #${filme.id}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Sinopse',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: AppColors.destaque,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    filme.overview.isEmpty
+                        ? 'Sinopse não disponível.'
+                        : filme.overview,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppColors.textoSecundario,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  _buildBotoes(),
                 ],
-              ),
-          ],
+              );
+
+              if (ladoAlado) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    poster,
+                    const SizedBox(width: 32),
+                    Expanded(child: informacoes),
+                  ],
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [poster, const SizedBox(height: 24), informacoes],
+              );
+            },
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBotoes() {
+    if (_salvando) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        ElevatedButton.icon(
+          onPressed: _salvarQueroVer,
+          icon: const Icon(Icons.bookmark_add_rounded, size: 20),
+          label: const Text('Quero Ver'),
+        ),
+        ElevatedButton.icon(
+          onPressed: _marcarJaVi,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFEDEDED),
+            foregroundColor: AppColors.fundo,
+          ),
+          icon: const Icon(
+            Icons.check_rounded,
+            size: 20,
+            color: AppColors.sucesso,
+          ),
+          label: const Text('Já Vi'),
+        ),
+      ],
     );
   }
 }
