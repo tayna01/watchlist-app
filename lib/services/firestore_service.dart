@@ -8,12 +8,12 @@ class FirestoreService {
 
   Future<void> salvarComoQueroVer(Filme filme) async {
     filme.status = 'quero_ver';
-    await _filmes.add(filme.toMap());
+    await _filmes.doc(filme.id.toString()).set(filme.toMap());
   }
 
   Future<void> marcarComoJaVi(Filme filme) async {
     filme.status = 'ja_vi';
-    await _filmes.add(filme.toMap());
+    await _filmes.doc(filme.id.toString()).set(filme.toMap());
   }
 
   Future<void> atualizarStatus(String docId, String status) async {
@@ -25,19 +25,23 @@ class FirestoreService {
   }
 
   Stream<List<FilmeComId>> listarPorStatus(String status) {
-    return _filmes
-        .where('status', isEqualTo: status)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            return FilmeComId(
-              filme: Filme.fromFirestoreMap(data),
-              docId: doc.id,
-            );
-          }).toList();
-        });
+    return _filmes.where('status', isEqualTo: status).snapshots().map((
+      snapshot,
+    ) {
+      final docs = snapshot.docs.toList();
+      docs.sort((a, b) {
+        final da = (a.data() as Map<String, dynamic>)['createdAt'];
+        final db = (b.data() as Map<String, dynamic>)['createdAt'];
+        if (da is Timestamp && db is Timestamp) {
+          return db.compareTo(da);
+        }
+        return 0;
+      });
+      return docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return FilmeComId(filme: Filme.fromFirestoreMap(data), docId: doc.id);
+      }).toList();
+    });
   }
 }
 
