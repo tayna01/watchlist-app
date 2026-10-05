@@ -77,7 +77,7 @@ diálogos e SnackBars.
 | Arquivo | Responsabilidade |
 |---|---|
 | `lib/theme/app_theme.dart` | `AppColors`, `AppRadius`, `AppLayout` e `AppTheme.dark` com `ColorScheme`, `TextTheme`, AppBar, NavigationBar, TabBar, botões, campos, cards, SnackBar, diálogo, popup, progresso, divisores e scrollbar. |
-| `lib/widgets/app_brand.dart` | `AppBrandBar`: AppBar com claquete, nome do app e subtítulo da tela; aceita `bottom` para as abas. |
+| `lib/widgets/app_brand.dart` | `AppBrandBar`: AppBar com o claquete, o nome "Watch List App" e o subtítulo da tela; aceita `bottom` para as abas. |
 | `lib/widgets/app_snack.dart` | `AppSnack.mostrar`: SnackBar flutuante padronizado com ícone colorido. |
 | `lib/widgets/poster_filme.dart` | `PosterFilme`: pôster da TMDB com fade no carregamento e placeholder no erro. |
 | `lib/widgets/nota_selo.dart` | `NotaSelo`: selo amarelo com estrela e nota. |
@@ -91,18 +91,52 @@ diálogos e SnackBars.
 | Arquivo | O que mudou |
 |---|---|
 | `pubspec.yaml` | Adicionada a dependência `google_fonts`. |
-| `lib/main.dart` | Aplicado `theme: AppTheme.dark`; `BottomNavigationBar` trocada por `NavigationBar`; título do app agora "watchlist-app"; `debugShowCheckedModeBanner: false`. |
+| `lib/main.dart` | Aplicado `theme: AppTheme.dark`; `BottomNavigationBar` trocada por `NavigationBar`; título do app e da aba do navegador ajustados para "Watch List App"; `debugShowCheckedModeBanner: false`. |
 | `lib/screens/busca_screen.dart` | Corpo da tela: campo com lupa, botão "Buscar" com ícone, título de seção com contador, grade de pôsteres responsiva, estado de carregamento e estado sem resultado estilizados. |
 | `lib/screens/minha_lista_screen.dart` | Cards horizontais estilizados com `ItemLista`, `EstadoVazio` para lista vazia e para erro, SnackBars flutuantes com ícone, lista com espaçamento e largura limitada. |
 | `lib/screens/detalhes_screen.dart` | Pôster grande com sombra, título em destaque, selo de nota, metadados, sinopse legível, dois botões claros e layout lado a lado ou empilhado. |
+| `lib/models/filme.dart` | Adicionado o campo `releaseDate`, lido do `release_date` da TMDB e salvo no Firestore, com o getter `ano` que extrai os 4 primeiros dígitos da data. É a única alteração de modelo, feita para exibir o ano na tela de detalhes. |
+| `lib/widgets/item_lista.dart` | O texto dos itens do menu passou a ficar dentro de um `Flexible`, para o rótulo quebrar em duas linhas em vez de estourar a largura do menu. |
+| `pubspec.yaml` | Removidos os comentários padrão do Flutter gerado automaticamente. |
+| `README.md` | Reescrito com descrição, funcionalidades, como rodar, tecnologias e estrutura do projeto. |
+| `test/widget_test.dart` | Substituído o teste padrão do contador por 12 testes do tema e dos widgets. |
+| `test/filme_test.dart` | Novo arquivo com 4 testes do modelo, incluindo a extração do ano. |
 
-**Não foram alterados:** `lib/models/filme.dart`, `lib/services/firestore_service.dart`,
+**Não foram alterados:** `lib/services/firestore_service.dart`,
 `lib/services/tmdb_service.dart`, `lib/firebase_options.dart`. As queries
 (`where('status', isEqualTo: status)`), os métodos de gravação, atualização e
-remoção e as chamadas à TMDB continuam exatamente iguais. A única diferença
-nesses arquivos é o `dart format`, que removeu um BOM do `filme.dart`.
+remoção e as chamadas à TMDB continuam exatamente iguais.
 
-## 5. Passo a passo e comandos executados
+## 5. Testes automatizados
+
+O arquivo `test/widget_test.dart` que existia era o teste padrão do contador
+do Flutter e **já falhava** antes do redesign, porque procurava `Icons.add` e o
+texto `"0"`, que não existem neste app. Foi substituído por testes que
+verificam justamente as partes visuais difíceis de conferir na tela:
+
+| Teste | O que garante |
+|---|---|
+| Tema | Cor de fundo, cor primária, cor de superfície, cores dos textos, fonte do corpo e do título, SnackBar flutuante, cor da NavigationBar e indicador da TabBar |
+| `AppBrandBar` | Nome do app, subtítulo da tela e ícone de claquete |
+| `PosterFilme` | Placeholder quando o filme não tem pôster e quando a URL da imagem falha |
+| `NotaSelo` | Nota com uma casa decimal e string vazia quando a nota é nula |
+| `EstadoVazio` | Ícone, título e mensagem |
+| `FilmeCartao` | Título, nota e disparo do `onTap` |
+| `ItemLista` | Título, nota, etiqueta da lista e disparo das ações mover e remover pelo menu |
+| `AppSnack` | Mensagem exibida e margem flutuante do SnackBar |
+
+O arquivo `test/filme_test.dart` cobre o modelo: leitura do `release_date` da
+TMDB, ano nulo quando a data falta ou é inválida, montagem da URL do pôster e
+leitura do ano e do status vindos do Firestore.
+
+Resultado: `16 testes passando` (`00:01 +16: All tests passed!`).
+
+Esses testes também resolveram uma pendência prática: o `errorBuilder` do
+pôster e o estado de erro da lista eram difíceis de ver no navegador, porque
+dependem de falha de rede. Agora são verificados de forma determinística, sem
+precisar desligar a internet.
+
+## 6. Passo a passo e comandos executados
 
 ```bash
 # 1. Dependência e fontes
@@ -125,13 +159,17 @@ dart format lib
 flutter analyze
 flutter run -d chrome
 flutter build web --release
+
+# Validação dos testes
+flutter test
 ```
 
 Resultado final da validação: `dart format` sem mudanças pendentes,
-`flutter analyze` com "No issues found" e `flutter build web --release`
-compilado com sucesso em cerca de 82 segundos.
+`flutter analyze` com "No issues found", `flutter test` com os 16 testes
+passando e `flutter build web --release` compilado com sucesso em cerca de 82
+segundos.
 
-## 6. Problemas encontrados e soluções
+## 7. Problemas encontrados e soluções
 
 1. **`indicatorWeight` não existe em `TabBarThemeData`.** O parâmetro pertence
    ao widget `TabBar`. Solução: o tema cuida da cor do indicador e o peso foi
@@ -157,20 +195,38 @@ compilado com sucesso em cerca de 82 segundos.
    PowerShell não. Solução: regra de trabalho, nunca editar arquivo com comando
    de terminal, sempre pelas ferramentas de edição, e recriar o arquivo
    afetado.
-6. **O modelo de dados não tem o ano do filme.** `Filme` só tem `id`, `title`,
-   `overview`, `posterPath` e `voteAverage`, e a TMDB devolve o ano em
-   `release_date`. Como a regra era não mexer no modelo nem nas chamadas da API,
-   o ano não foi exibido na tela de detalhes. No lugar, mostra-se o id do filme
-   como metadado. Para incluir o ano é preciso adicionar `releaseDate` ao modelo
-   e ao `fromTmdbJson`, o que é uma alteração de dados e precisa de avaliação.
-7. **`test/widget_test.dart` é o teste padrão do contador do Flutter** e já
+6. **O modelo de dados não tinha o ano do filme.** `Filme` só tinha `id`,
+   `title`, `overview`, `posterPath` e `voteAverage`, e a TMDB devolve o ano em
+   `release_date`. Durante o redesign o ano ficou de fora para não alterar o
+   modelo nem as chamadas da API, e no lugar dele aparecia o id do filme. Com a
+   autorização posterior, o campo `releaseDate` foi incluído no modelo, lido do
+   `fromTmdbJson`, salvo pelo `toMap` e lido de volta pelo `fromFirestoreMap`,
+   para que o ano não se perca ao salvar no Firestore. A extração do ano ficou
+   no getter `ano`, que devolve `null` quando a data está ausente ou incompleta,
+   e assim a tela não quebra.
+7. **`test/widget_test.dart` era o teste padrão do contador do Flutter** e já
    estava quebrado antes do redesign, porque procura `Icons.add` e o texto "0",
-   que não existem neste app. Não foi alterado por não ser parte do trabalho
-   visual.
+   que não existem neste app. Como não dá para rodar `flutter test` com um
+   arquivo quebrado, ele foi substituído por testes dos widgets e do tema, e
+   criado o `test/filme_test.dart` para o modelo.
+8. **Os itens do menu de ações estouravam a largura.** O primeiro teste do
+   `ItemLista` reprovou com `A RenderFlex overflowed by 14 pixels on the right`,
+   porque o ícone e o texto "Marcar como Quero Ver" não cabiam nos 256 px do
+   `PopupMenu`. Solução: envolver o texto em `Flexible`, deixando o rótulo
+   quebrar em duas linhas. Erro esse não aparecia na tela com o card centralizado
+   e só foi encontrado porque o teste cobre o menu de verdade.
+9. **`behavior` do `SnackBar` chega como `null` no teste.** O atributo vem do
+   `SnackBarTheme` e não é copiado para o widget. Solução: o teste passa a
+   conferir a margem, que é definida diretamente no `AppSnack`, e a checagem do
+   comportamento flutuante continua no teste do tema.
+10. **Arredondamento de nota no teste.** `7.85.toStringAsFixed(1)` devolve
+   `"7.8"` por causa da representação binária do número, então o teste que
+   esperava `"7.9"` reprovou. Solução: usar `7.86` como entrada, que arredonda
+   de forma previsível.
 
-## 7. Decisões de design para a apresentação
+## 8. Decisões de design para a apresentação
 
-O app adopts um tema escuro inspirado no IMDb para que o foco esteja no
+O app adota um tema escuro inspirado no IMDb para que o foco esteja no
 conteúdo, que são os pôsteres, e não em decorações: o fundo é quase preto, os
 cards são cinza escuro com contorno de 1 px e apenas um vermelho e um verde bem
 discretos dão significado às ações. O amarelo `#F5C518` foi escolhido como
@@ -182,7 +238,7 @@ pequenos e Bebas Neue, por ser condensada e em caixa alta, dá cara de cartaz de
 cinema nos títulos. Todos os cantos entre 8 e 12 px, o espaçamento em múltiplos
 de 4 e as sombras suaves mantêm o conjunto coerente. Para o navegador, o
 conteúdo foi limitado a 1100 px e centralizado, e a grade de pôsteres recalcula
-o número de colunas conforme a largura da janela, de 2 a 7, evitando cartões
+o número de colunas conforme a largura da janela, de 2 a 5, evitando cartões
 esticados em telas grandes. Por fim, os elementos que se repetem foram
 transformados em widgets reutilizáveis (`PosterFilme`, `NotaSelo`,
 `FilmeCartao`, `ItemLista`, `EstadoVazio`, `AppSnack`, `AppBrandBar`), o que
