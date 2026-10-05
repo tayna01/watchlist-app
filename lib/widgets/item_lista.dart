@@ -89,8 +89,10 @@ class ItemLista extends StatelessWidget {
                 color: AppColors.sucesso,
               ),
               const SizedBox(width: 10),
-              Text(
-                quittingaVer ? 'Marcar como Já Vi' : 'Marcar como Quero Ver',
+              Flexible(
+                child: Text(
+                  quittingaVer ? 'Marcar como Já Vi' : 'Marcar como Quero Ver',
+                ),
               ),
             ],
           ),
@@ -105,9 +107,11 @@ class ItemLista extends StatelessWidget {
                 color: AppColors.perigo,
               ),
               const SizedBox(width: 10),
-              Text(
-                'Remover da lista',
-                style: TextStyle(color: AppColors.perigo),
+              Flexible(
+                child: Text(
+                  'Remover da lista',
+                  style: TextStyle(color: AppColors.perigo),
+                ),
               ),
             ],
           ),
