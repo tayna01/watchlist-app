@@ -158,7 +158,7 @@ class _BuscaScreenState extends State<BuscaScreen> {
       builder: (context, constraints) {
         final colunas = (constraints.maxWidth / AppLayout.larguraCartao)
             .floor()
-            .clamp(2, 7);
+            .clamp(2, 5);
         return GridView.builder(
           padding: const EdgeInsets.only(bottom: 24),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
