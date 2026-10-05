@@ -43,7 +43,7 @@ class _MinhaListaScreenState extends State<MinhaListaScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return Center(child: Text('Erro: ' + snapshot.error.toString()));
+          return Center(child: Text('Erro: '));
         }
         final lista = snapshot.data ?? [];
         if (lista.isEmpty) {
