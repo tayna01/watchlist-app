@@ -5,6 +5,7 @@ class Filme {
   final String title;
   final String overview;
   final String? posterPath;
+  final String? releaseDate;
   final double? voteAverage;
   String? status;
 
@@ -13,6 +14,7 @@ class Filme {
     required this.title,
     required this.overview,
     this.posterPath,
+    this.releaseDate,
     this.voteAverage,
     this.status,
   });
@@ -23,6 +25,7 @@ class Filme {
       title: json["title"] as String,
       overview: json["overview"] as String? ?? "",
       posterPath: json["poster_path"] as String?,
+      releaseDate: json["release_date"] as String?,
       voteAverage: (json["vote_average"] as num?)?.toDouble(),
     );
   }
@@ -33,6 +36,7 @@ class Filme {
       "title": title,
       "overview": overview,
       "posterPath": posterPath,
+      "releaseDate": releaseDate,
       "voteAverage": voteAverage,
       "status": status,
       "createdAt": FieldValue.serverTimestamp(),
@@ -45,6 +49,7 @@ class Filme {
       title: map["title"] as String,
       overview: map["overview"] as String? ?? "",
       posterPath: map["posterPath"] as String?,
+      releaseDate: map["releaseDate"] as String?,
       voteAverage: (map["voteAverage"] as num?)?.toDouble(),
       status: map["status"] as String?,
     );
@@ -53,5 +58,11 @@ class Filme {
   String? get posterUrl {
     if (posterPath == null) return null;
     return "https://image.tmdb.org/t/p/w500$posterPath";
+  }
+
+  String? get ano {
+    final data = releaseDate;
+    if (data == null || data.length < 4) return null;
+    return data.substring(0, 4);
   }
 }

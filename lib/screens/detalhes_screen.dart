@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../models/filme.dart';
 import '../services/firestore_service.dart';
 import '../theme/app_theme.dart';
@@ -132,11 +132,13 @@ class _DetalhesScreenState extends State<DetalhesScreen> {
                         'Nota ${filme.voteAverage?.toStringAsFixed(1) ?? '-'} / 10',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                      const SizedBox(width: 16),
-                      Text(
-                        'TMDB #${filme.id}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
+                      if (filme.ano != null) ...[
+                        const SizedBox(width: 16),
+                        Text(
+                          filme.ano!,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 24),
