@@ -1,4 +1,6 @@
-﻿class Filme {
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
+
+class Filme {
   final int id;
   final String title;
   final String overview;
@@ -33,7 +35,7 @@
       "posterPath": posterPath,
       "voteAverage": voteAverage,
       "status": status,
-      "createdAt": DateTime.now().toIso8601String(),
+      "createdAt": FieldValue.serverTimestamp(),
     };
   }
 
@@ -50,6 +52,6 @@
 
   String? get posterUrl {
     if (posterPath == null) return null;
-    return "https://image.tmdb.org/t/p/w500$posterPath";
+    return "https://image.tmdb.org/t/p/w500";
   }
 }
