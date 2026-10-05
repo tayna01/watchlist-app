@@ -17,7 +17,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Filmes para Assistir',
+      title: 'watchlist-app',
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       home: const HomeTabs(),
     );
@@ -40,12 +41,20 @@ class _HomeTabsState extends State<HomeTabs> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_index],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
-        onTap: (i) => setState(() => _index = i),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Buscar'),
-          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Minha Lista'),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: (i) => setState(() => _index = i),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.search_rounded),
+            selectedIcon: Icon(Icons.search_rounded),
+            label: 'Buscar',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.video_library_rounded),
+            selectedIcon: Icon(Icons.video_library_rounded),
+            label: 'Minha Lista',
+          ),
         ],
       ),
     );
