@@ -38,7 +38,7 @@ class AppBrandBar extends StatelessWidget implements PreferredSizeWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('watchlist-app'),
+              const Text('Watch List App'),
               if (subtitulo != null)
                 Text(
                   subtitulo!,

@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'watchlist-app',
+      title: 'Watch List App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       home: const HomeTabs(),
