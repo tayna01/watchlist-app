@@ -1,7 +1,11 @@
 ﻿import 'package:flutter/material.dart';
 import '../models/filme.dart';
 import '../services/tmdb_service.dart';
-
+import '../theme/app_theme.dart';
+import '../widgets/app_brand.dart';
+import '../widgets/conteudo_limitado.dart';
+import '../widgets/estado_vazio.dart';
+import '../widgets/filme_cartao.dart';
 import 'detalhes_screen.dart';
 
 class BuscaScreen extends StatefulWidget {
@@ -75,77 +79,104 @@ class _BuscaScreenState extends State<BuscaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Filmes para Assistir')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      labelText: 'Buscar filme (título)',
-                      border: OutlineInputBorder(),
-                    ),
-                    onSubmitted: (_) => _buscar(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(onPressed: _buscar, child: const Text('Buscar')),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_buscando)
-              Text(
-                'Resultados da busca',
-                style: Theme.of(context).textTheme.titleMedium,
-              )
-            else
-              Text(
-                'Filmes populares',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            const SizedBox(height: 8),
-            if (_carregando)
-              const Expanded(child: Center(child: CircularProgressIndicator()))
-            else
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _filmes.length,
-                  itemBuilder: (context, index) {
-                    final filme = _filmes[index];
-                    return Card(
-                      child: ListTile(
-                        leading: filme.posterUrl != null
-                            ? Image.network(
-                                filme.posterUrl!,
-                                width: 60,
-                                height: 90,
-                                fit: BoxFit.cover,
-                              )
-                            : const SizedBox(
-                                width: 60,
-                                height: 90,
-                                child: Icon(Icons.movie),
-                              ),
-                        title: Text(filme.title),
-                        subtitle: filme.voteAverage != null
-                            ? Text(
-                                'Nota: ${filme.voteAverage!.toStringAsFixed(1)}',
-                              )
-                            : null,
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => _abrirDetalhes(filme),
+      appBar: const AppBrandBar(subtitulo: 'BUSCA'),
+      body: ConteudoLimitado(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      textInputAction: TextInputAction.search,
+                      decoration: const InputDecoration(
+                        hintText: 'Buscar filme (título)',
+                        prefixIcon: Icon(Icons.search_rounded),
                       ),
-                    );
-                  },
-                ),
+                      onSubmitted: (_) => _buscar(),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    onPressed: _buscar,
+                    icon: const Icon(Icons.search_rounded, size: 20),
+                    label: const Text('Buscar'),
+                  ),
+                ],
               ),
-          ],
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Text(
+                    _buscando ? 'Resultados da busca' : 'Filmes populares',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(width: 10),
+                  if (!_carregando && _filmes.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.elevada,
+                        borderRadius: BorderRadius.circular(AppRadius.selo),
+                      ),
+                      child: Text(
+                        '${_filmes.length}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Expanded(child: _buildCorpo()),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCorpo() {
+    if (_carregando) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_filmes.isEmpty) {
+      return EstadoVazio(
+        icone: Icons.search_off_rounded,
+        titulo: _buscando ? 'Nenhum resultado' : 'Nada por aqui',
+        mensagem: _buscando
+            ? 'Tente outro título ou confira a digitação.'
+            : 'A busca foi reiniciada. Digite um título para começar.',
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final colunas = (constraints.maxWidth / AppLayout.larguraCartao)
+            .floor()
+            .clamp(2, 7);
+        return GridView.builder(
+          padding: const EdgeInsets.only(bottom: 24),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: colunas,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 20,
+            childAspectRatio: 0.58,
+          ),
+          itemCount: _filmes.length,
+          itemBuilder: (context, index) {
+            final filme = _filmes[index];
+            return FilmeCartao(
+              filme: filme,
+              onTap: () => _abrirDetalhes(filme),
+            );
+          },
+        );
+      },
     );
   }
 }
